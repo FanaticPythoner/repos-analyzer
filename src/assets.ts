@@ -1,9 +1,10 @@
 import type { Manifest, ManifestChunk } from "vite";
-import { ensureLeadingSlash } from "./lib/utils";
+import { joinBasePath } from "./lib/public-path";
 
 interface GetAssetsOptions {
 	manifest: Manifest;
 	clientEntry: string;
+	basePath: string;
 }
 
 export interface Assets {
@@ -12,18 +13,18 @@ export interface Assets {
 	preloads: string[];
 }
 
-export const getAssets = ({ manifest, clientEntry }: GetAssetsOptions): Assets => {
+export const getAssets = ({ manifest, clientEntry, basePath }: GetAssetsOptions): Assets => {
 	const chunk = manifest[clientEntry];
-	const script = ensureLeadingSlash(chunk.file);
+	const script = joinBasePath(basePath, chunk.file);
 
-	const css = chunk.css?.map(link => ensureLeadingSlash(link)) ?? [];
+	const css = chunk.css?.map(link => joinBasePath(basePath, link)) ?? [];
 	const preloads = [];
 
 	const importedChunks = getImportedChunks(manifest, clientEntry);
 
 	for (const chunk of importedChunks) {
-		preloads.push(ensureLeadingSlash(chunk.file));
-		css.push(...(chunk.css?.map(link => ensureLeadingSlash(link)) ?? []));
+		preloads.push(joinBasePath(basePath, chunk.file));
+		css.push(...(chunk.css?.map(link => joinBasePath(basePath, link)) ?? []));
 	}
 
 	return { css, script, preloads };

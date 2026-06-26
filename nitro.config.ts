@@ -1,5 +1,5 @@
 import path from "path";
-import { CLIENT_ENTRY } from "./config";
+import { CLIENT_ENTRY, getAppBasePath, getPublicSiteUrl, getRepositoryUrl } from "./config";
 import { islands } from "./src/lib/island/plugin";
 
 export default defineNitroConfig({
@@ -12,11 +12,18 @@ export default defineNitroConfig({
 	},
 	runtimeConfig: {
 		clientEntry: path.normalize(CLIENT_ENTRY),
+		publicBasePath: getAppBasePath(),
+		publicRepositoryUrl: getRepositoryUrl(),
+		publicSiteUrl: getPublicSiteUrl() ?? undefined,
 	},
 	rollupConfig: {
 		plugins: [islands.rollup()],
 	},
 	timing: true,
+	prerender: {
+		routes: ["/", "/404.html"],
+		crawlLinks: false,
+	},
 	experimental: {
 		wasm: true,
 	},
@@ -41,8 +48,7 @@ export default defineNitroConfig({
 			compilerOptions: {
 				strict: true,
 				jsx: "react-jsx",
-				// dumb workaround because nitro's default tsconfig for some reason contains
-				// jsxFactory/jsxFragmentFactory for nano-jsx
+				// Nitro tsconfig injects nano-jsx factories; Hono JSX uses jsxImportSource.
 				jsxFactory: "",
 				jsxFragmentFactory: "",
 				jsxImportSource: "hono/jsx",

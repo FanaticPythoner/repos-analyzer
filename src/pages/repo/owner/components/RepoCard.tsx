@@ -1,13 +1,16 @@
 import { Badge } from "~/components/Badge";
 import { RepoStats } from "~/components/RepoStats";
+import { useSSRContext } from "~/lib/context";
 import { dayjs } from "~/lib/dayjs";
 import { GHApiGetReposResponse } from "~/lib/github/api";
+import { joinBasePath } from "~/lib/public-path";
 
 interface RepoCardProps {
 	repo: GHApiGetReposResponse[number];
+	basePath?: string;
 }
 
-export const RepoCard = ({ repo }: RepoCardProps) => {
+const RepoCardContent = ({ repo, basePath = "/" }: RepoCardProps) => {
 	let href = `/${repo.owner.login}/${repo.name}`;
 
 	if (repo.default_branch) {
@@ -16,7 +19,7 @@ export const RepoCard = ({ repo }: RepoCardProps) => {
 
 	return (
 		<a
-			href={href}
+			href={joinBasePath(basePath, href)}
 			class="flex min-h-[8rem] flex-col gap-1 rounded-md border border-border px-4 py-2 transition-colors duration-100 outline-none hover:border-border-focus focus:border-border-focus"
 		>
 			<div class="flex gap-2">
@@ -43,4 +46,14 @@ export const RepoCard = ({ repo }: RepoCardProps) => {
 			</div>
 		</a>
 	);
+};
+
+export const RepoCard = ({ repo }: RepoCardProps) => {
+	const { basePath } = useSSRContext();
+
+	return <RepoCardContent repo={repo} basePath={basePath} />;
+};
+
+export const RepoCardClient = ({ repo }: RepoCardProps) => {
+	return <RepoCardContent repo={repo} />;
 };

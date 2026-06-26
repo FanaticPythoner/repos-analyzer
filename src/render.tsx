@@ -7,6 +7,7 @@ import { App } from "./components/App";
 import { SSRContext, SSRContextValue } from "./lib/context";
 import { IslandFC } from "./lib/island/types";
 import { dedupePreload, getPreloadForModule, PreloadEntry } from "./lib/preload";
+import { normalizeBasePath, normalizeSiteUrl, stripBasePath } from "./lib/public-path";
 import { Router } from "./lib/router/Router";
 import { DEFAULT_THEME } from "./lib/theme";
 import { useManifest } from "./manifest";
@@ -25,31 +26,35 @@ export const renderPage = async (
 ) => {
 	const url = getRequestURL(event);
 
-	const clientEntry = useRuntimeConfig(event).clientEntry;
+	const runtimeConfig = useRuntimeConfig(event);
+	const clientEntry = runtimeConfig.clientEntry;
+	const basePath = normalizeBasePath(runtimeConfig.publicBasePath);
+	const repositoryUrl = runtimeConfig.publicRepositoryUrl;
+	const siteUrl = normalizeSiteUrl(runtimeConfig.publicSiteUrl);
 	const manifest = await useManifest();
 
 	if (!manifest) {
 		throw new Error("Failed to retrieve manifest");
 	}
 
-	const assets = getAssets({ manifest, clientEntry });
+	const assets = getAssets({ manifest, clientEntry, basePath });
 	const preconnect = ["https://api.github.com", "https://ghloc.ifels.dev"];
 
 	if (preloadIslands) {
 		const islandPreloads = preloadIslands
-			.map(island => island.src && getPreloadForModule(island.src, manifest))
+			.map(island => island.src && getPreloadForModule(island.src, manifest, basePath))
 			.filter(v => !!v);
 
 		preload = dedupePreload([...preload, ...islandPreloads].flat());
 	}
 
-	// TODO: cookie or ls?
-	// const theme = (getCookie(event, THEME_COOKIE) ?? DEFAULT_THEME) as Theme;
-
 	const timing = event.context.timing;
 
 	const context: SSRContextValue = {
 		url: getRequestURL(event),
+		basePath,
+		repositoryUrl,
+		siteUrl,
 		meta: {
 			title,
 			ogImage,
@@ -59,7 +64,6 @@ export const renderPage = async (
 		preconnect,
 		preload,
 		manifest,
-		// TODO: retrieve theme from request
 		theme: DEFAULT_THEME,
 	};
 
@@ -69,7 +73,7 @@ export const renderPage = async (
 
 	const app = (
 		<SSRContext.Provider value={context}>
-			<Router ssrPath={url.pathname} ssrSearch={url.search}>
+			<Router ssrPath={stripBasePath(basePath, url.pathname)} ssrSearch={url.search}>
 				<App>{page}</App>
 			</Router>
 		</SSRContext.Provider>

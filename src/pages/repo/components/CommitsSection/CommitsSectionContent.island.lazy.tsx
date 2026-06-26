@@ -61,7 +61,7 @@ const Heatmap = memo(({ activity }: { activity: GHApiGetCommitActivityResponse }
 	const cellSize = 16;
 	const headerOffset = 17;
 	const weekDaysOffset = 35;
-	const randomLabelOffset = 10; // idk what this is
+	const monthLabelOffset = 10;
 
 	const maxLevel = 4;
 
@@ -127,7 +127,7 @@ const Heatmap = memo(({ activity }: { activity: GHApiGetCommitActivityResponse }
 						return (
 							<text
 								class="text-[12px]"
-								dy={randomLabelOffset}
+								dy={monthLabelOffset}
 								dx={index * cellSize}
 								key={index}
 							>
@@ -145,7 +145,7 @@ const Heatmap = memo(({ activity }: { activity: GHApiGetCommitActivityResponse }
 					{weekDays.map((text, index) => (
 						<text
 							class="text-[12px]"
-							dy={randomLabelOffset + index * cellSize}
+							dy={monthLabelOffset + index * cellSize}
 							key={index}
 						>
 							{text}

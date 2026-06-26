@@ -471,7 +471,7 @@ clean *flags:
       esac
     done
 
-    rm -rf dist dist-vite .nitro .output .vercel artifacts node_modules/.cache
+    rm -rf dist dist-vite .nitro .output artifacts node_modules/.cache
     rm -rf .cache/act-artifacts .cache/just-tools
 
     if [[ "$force" -eq 1 ]]; then

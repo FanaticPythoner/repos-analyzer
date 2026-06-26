@@ -1,4 +1,5 @@
 import { useSSRContext } from "~/lib/context";
+import { joinBasePath, joinSiteUrl } from "~/lib/public-path";
 import { getThemeColor } from "~/lib/theme";
 import { buildPageTitle } from "~/lib/title";
 
@@ -6,11 +7,15 @@ const DESCRIPTION = "Count lines of code in a GitHub repository.";
 const DEFAULT_IMAGE = "android-chrome-512x512.png";
 
 export const Head = () => {
-	const { meta, theme, assets, preconnect, preload, url } = useSSRContext();
+	const { meta, theme, assets, preconnect, preload, url, basePath, siteUrl } = useSSRContext();
 
 	const title = buildPageTitle(meta?.title);
-	const image = `${url.origin}/${meta?.ogImage ?? DEFAULT_IMAGE}`;
-	const canonical = url.origin + url.pathname;
+	const canonical = siteUrl
+		? joinSiteUrl(siteUrl, basePath, url.pathname)
+		: url.origin + url.pathname;
+	const image = siteUrl
+		? joinSiteUrl(siteUrl, basePath, meta?.ogImage ?? DEFAULT_IMAGE)
+		: `${url.origin}${joinBasePath(basePath, meta?.ogImage ?? DEFAULT_IMAGE)}`;
 
 	return (
 		<head>
@@ -33,11 +38,16 @@ export const Head = () => {
 				content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0"
 			/>
 			<meta name="application-name" content="ghloc" />
+			<meta name="ghloc:base-path" content={basePath} />
 			<meta name="theme-color" content={getThemeColor(theme)} />
-			<link rel="icon" href="/favicon.ico" sizes="any" />
-			<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-			<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
-			<link rel="manifest" href="/manifest.webmanifest" />
+			<link rel="icon" href={joinBasePath(basePath, "favicon.ico")} sizes="any" />
+			<link rel="icon" href={joinBasePath(basePath, "favicon.svg")} type="image/svg+xml" />
+			<link
+				rel="apple-touch-icon"
+				sizes="180x180"
+				href={joinBasePath(basePath, "apple-touch-icon.png")}
+			/>
+			<link rel="manifest" href={joinBasePath(basePath, "manifest.webmanifest")} />
 
 			{assets.css.map(href => (
 				<link rel="stylesheet" href={href} />
@@ -70,7 +80,7 @@ export const Head = () => {
 			<link
 				rel="search"
 				type="application/opensearchdescription+xml"
-				href="/osd.xml"
+				href={joinBasePath(basePath, "osd.xml")}
 				title="ghloc"
 			/>
 		</head>

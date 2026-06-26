@@ -4,13 +4,24 @@ import { ExternalLinkIcon } from "~/components/icons/ExternalLinkIcon";
 import { GitHubIcon } from "~/components/icons/GitHubIcon";
 import { Link } from "~/components/Link";
 import { RepoStats } from "~/components/RepoStats";
+import { useSSRContext } from "~/lib/context";
 import { formatBytes } from "~/lib/format";
+import { joinBasePath } from "~/lib/public-path";
 import { removeProtocol } from "~/lib/utils";
 import { CommonSectionProps } from "../types";
 
 type InfoSectionProps = CommonSectionProps;
 
-export const InfoSection = async ({ owner, repo, data }: InfoSectionProps) => {
+interface InfoSectionContentProps extends InfoSectionProps {
+	basePath?: string;
+}
+
+export const InfoSectionContent = ({
+	owner,
+	repo,
+	data,
+	basePath = "/",
+}: InfoSectionContentProps) => {
 	if (!data) {
 		return <ErrorPlaceholder>Failed to load repo info</ErrorPlaceholder>;
 	}
@@ -28,9 +39,9 @@ export const InfoSection = async ({ owner, repo, data }: InfoSectionProps) => {
 					>
 						<GitHubIcon />
 					</a>
-					<Link href={`/${owner}`}>{owner}</Link>
+					<Link href={joinBasePath(basePath, `/${owner}`)}>{owner}</Link>
 					{" / "}
-					<Link href={`/${owner}/${repo}`}>{repo}</Link>
+					<Link href={joinBasePath(basePath, `/${owner}/${repo}`)}>{repo}</Link>
 				</div>
 
 				<div class="mr-auto flex gap-2">
@@ -75,4 +86,10 @@ export const InfoSection = async ({ owner, repo, data }: InfoSectionProps) => {
 			)}
 		</>
 	);
+};
+
+export const InfoSection = async (props: InfoSectionProps) => {
+	const { basePath } = useSSRContext();
+
+	return <InfoSectionContent {...props} basePath={basePath} />;
 };

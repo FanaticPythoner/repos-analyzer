@@ -1,6 +1,6 @@
 import { Island } from "~/lib/island";
-import IndexPageContent from "./components/IndexPageContent.island.lazy";
+import AppShell from "~/pages/app/AppShell.island.lazy";
 
 export const IndexPage = () => {
-	return <Island Component={IndexPageContent} props={{}} />;
+	return <Island Component={AppShell} props={{}} />;
 };

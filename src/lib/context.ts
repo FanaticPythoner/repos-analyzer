@@ -7,6 +7,9 @@ import { Theme } from "./theme";
 
 export interface SSRContextValue {
 	url: URL;
+	basePath: string;
+	repositoryUrl: string;
+	siteUrl: string | null;
 	meta?: {
 		title?: string;
 		ogImage?: string;

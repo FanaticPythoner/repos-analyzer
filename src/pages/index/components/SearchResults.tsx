@@ -1,6 +1,7 @@
 import { useCallback } from "hono/jsx";
 import { RepoStats } from "~/components/RepoStats";
 import { GHApiSearchReposResponse } from "~/lib/github/api";
+import { toDocumentPath } from "~/lib/public-path";
 import { cn } from "~/lib/utils";
 
 interface SearchResultsProps {
@@ -39,7 +40,9 @@ export const SearchResults = ({ activeIndex, onChangeActiveIndex, items }: Searc
 							// "hover:bg-tree-active focus-visible:bg-tree-active",
 							isActive && "bg-tree-active",
 						)}
-						href={`/${item.full_name}?branch=${encodeURIComponent(item.default_branch)}`}
+						href={toDocumentPath(
+							`/${item.full_name}?branch=${encodeURIComponent(item.default_branch)}`,
+						)}
 						key={item.id}
 						onPointerEnter={() => onChangeActiveIndex(index)}
 						onFocusIn={() => onChangeActiveIndex(index)}

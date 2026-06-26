@@ -1,4 +1,5 @@
 import { useContext, useSyncExternalStore } from "hono/jsx";
+import { getDocumentBasePath, joinBasePath, stripBasePath } from "../public-path";
 import { RouterContext } from "./context";
 
 // adapted from https://github.com/molefrog/wouter/blob/b32804fa35aedff1e9bd3da98ae82c5af5c71a61/packages/wouter/src/use-browser-location.js#L38
@@ -31,7 +32,7 @@ const notify = () => {
 	}
 };
 
-const getPathname = () => location.pathname;
+const getPathname = () => stripBasePath(getDocumentBasePath(), location.pathname);
 
 const getSearch = () => new URLSearchParams(location.search);
 
@@ -51,7 +52,8 @@ export const useRouter = () => {
 	);
 
 	const navigate = (pathname: string, search: URLSearchParams, options?: NavigateOptions) => {
-		const args = [null, "", search.size ? `${pathname}?${search}` : pathname] as const;
+		const documentPath = joinBasePath(getDocumentBasePath(), pathname);
+		const args = [null, "", search.size ? `${documentPath}?${search}` : documentPath] as const;
 
 		if (options?.replace) {
 			history.replaceState(...args);

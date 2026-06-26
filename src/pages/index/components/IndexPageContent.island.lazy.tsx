@@ -4,6 +4,7 @@ import { SpinnerIcon } from "~/components/icons/SpinnerIcon";
 import { Input } from "~/components/Input";
 import { useDebouncedValue } from "~/lib/debounce";
 import { ghApi } from "~/lib/github/api";
+import { toDocumentPath } from "~/lib/public-path";
 import { useQuery } from "~/lib/query/useQuery";
 import { useRouter } from "~/lib/router/useRouter";
 import { cn } from "~/lib/utils";
@@ -74,7 +75,9 @@ export default function IndexPageContent() {
 			const item = query.data?.items[activeIndex];
 
 			if (item) {
-				location.href = `/${item.full_name}?branch=${encodeURIComponent(item.default_branch)}`;
+				location.href = toDocumentPath(
+					`/${item.full_name}?branch=${encodeURIComponent(item.default_branch)}`,
+				);
 			}
 		} else if (e.key === "ArrowDown") {
 			setActiveIndex(Math.min(activeIndex + 1, (query.data?.items.length ?? 1) - 1));

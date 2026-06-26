@@ -1,8 +1,11 @@
 import tailwindcss from "@tailwindcss/vite";
 import { defineConfig } from "vite";
 import { ManifestOptions, VitePWA } from "vite-plugin-pwa";
-import { CLIENT_ENTRY } from "./config";
+import { CLIENT_ENTRY, getAppBasePath } from "./config";
 import { islands } from "./src/lib/island/plugin";
+import { joinBasePath } from "./src/lib/public-path";
+
+const basePath = getAppBasePath();
 
 const manifest: Partial<ManifestOptions> = {
 	name: "ghloc",
@@ -10,12 +13,12 @@ const manifest: Partial<ManifestOptions> = {
 	description: "Count lines of code in GitHub repository",
 	icons: [
 		{
-			src: "/android-chrome-192x192.png",
+			src: joinBasePath(basePath, "android-chrome-192x192.png"),
 			sizes: "192x192",
 			type: "image/png",
 		},
 		{
-			src: "/android-chrome-512x512.png",
+			src: joinBasePath(basePath, "android-chrome-512x512.png"),
 			sizes: "512x512",
 			type: "image/png",
 		},
@@ -28,6 +31,7 @@ const manifest: Partial<ManifestOptions> = {
 
 export default defineConfig({
 	appType: "mpa",
+	base: basePath,
 	build: {
 		manifest: true,
 		sourcemap: true,

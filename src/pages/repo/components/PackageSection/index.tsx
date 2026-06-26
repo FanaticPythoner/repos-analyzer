@@ -4,9 +4,9 @@ import { ghApi } from "~/lib/github/api";
 import { Island } from "~/lib/island";
 import { npmApi } from "~/lib/npm/api";
 import { CommonSectionProps } from "../../types";
+import { parsePackageJson } from "./package-json";
 import PackageSectionContent from "./PackageSectionContent.island.lazy";
 import { PackageSectionFallback } from "./PackageSectionFallback";
-import { PackageJson } from "./types";
 
 interface PackageSectionProps extends CommonSectionProps {
 	branch: string;
@@ -26,15 +26,9 @@ export const PackageSection = async ({ owner, repo, branch }: PackageSectionProp
 		return <PackageSectionFallback />;
 	}
 
-	let pkg: PackageJson | null = null;
+	const pkg = parsePackageJson(packageJsonRaw);
 
-	try {
-		pkg = JSON.parse(packageJsonRaw);
-	} catch {
-		/* empty */
-	}
-
-	if (!pkg || !pkg.name || pkg.private) {
+	if (!pkg) {
 		return (
 			<PackageSectionFallback>
 				No npm package detected in the project root.

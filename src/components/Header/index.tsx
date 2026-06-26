@@ -1,4 +1,6 @@
+import { useSSRContext } from "~/lib/context";
 import { Island } from "~/lib/island";
+import { joinBasePath } from "~/lib/public-path";
 import { CodeIcon } from "../icons/CodeIcon";
 import { FirefoxIcon } from "../icons/FirefoxIcon";
 import { GitHubIcon } from "../icons/GitHubIcon";
@@ -7,21 +9,18 @@ import { HeaderItem } from "./HeaderItem";
 import ThemeToggle from "./ThemeToggle.island";
 
 export const Header = () => {
+	const { basePath, repositoryUrl } = useSSRContext();
+
 	return (
 		<header class="mb-1">
 			<div class="flex justify-end gap-1 xs:gap-0">
-				<a href="/" title="Search repos">
+				<a href={joinBasePath(basePath, "/")} title="Search repos">
 					<HeaderItem>
 						<SearchIcon />
 					</HeaderItem>
 				</a>
 				<Island Component={ThemeToggle} props={{}} />
-				<a
-					href="https://github.com/pajecawav/ghloc-web"
-					target="_blank"
-					rel="noopener"
-					title="Project source code"
-				>
+				<a href={repositoryUrl} target="_blank" rel="noopener" title="Project source code">
 					<HeaderItem>
 						<GitHubIcon />
 					</HeaderItem>

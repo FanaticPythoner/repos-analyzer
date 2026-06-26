@@ -1,6 +1,6 @@
 import { JSX } from "hono/jsx";
 import { Manifest } from "vite";
-import { ensureLeadingSlash, removeLeadingSlash } from "./utils";
+import { joinBasePath, removeLeadingSlash } from "./public-path";
 
 export interface PreloadEntry {
 	rel?: "preload" | "modulepreload";
@@ -9,7 +9,11 @@ export interface PreloadEntry {
 	crossorigin?: JSX.CrossOrigin;
 }
 
-export const getPreloadForModule = (src: string, manifest: Manifest): PreloadEntry[] | null => {
+export const getPreloadForModule = (
+	src: string,
+	manifest: Manifest,
+	basePath: string,
+): PreloadEntry[] | null => {
 	const chunk = manifest[removeLeadingSlash(src)];
 
 	if (!chunk || chunk.isEntry) {
@@ -19,15 +23,14 @@ export const getPreloadForModule = (src: string, manifest: Manifest): PreloadEnt
 	const preload: Array<PreloadEntry> = [
 		{
 			rel: "modulepreload",
-			href: ensureLeadingSlash(chunk.file),
+			href: joinBasePath(basePath, chunk.file),
 			as: "script",
 			crossorigin: "",
 		},
 	];
 
-	// TODO: check nested preloads are needed
 	for (const imp of chunk.imports ?? []) {
-		preload.push(...(getPreloadForModule(imp, manifest) ?? []));
+		preload.push(...(getPreloadForModule(imp, manifest, basePath) ?? []));
 	}
 
 	return preload;
