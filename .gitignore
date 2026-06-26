@@ -12,4 +12,5 @@ dist-vite
 .output
 .env
 .vercel
+artifacts
 *.tsbuildinfo
