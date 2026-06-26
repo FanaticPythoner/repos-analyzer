@@ -252,8 +252,17 @@ test:
     #!/usr/bin/env bash
     set -euo pipefail
     just ci
+    just test-commit-activity
     just test-search-input
     just test-release-scripts
+
+# Examples:
+# just test-commit-activity
+test-commit-activity:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    {{ node_bootstrap }}
+    pnpm test:commit-activity
 
 # Examples:
 # just test-search-input

@@ -9,20 +9,23 @@ import { cn } from "~/lib/utils";
 import { Section } from "~/pages/repo/components/Section";
 import { CommonSectionProps } from "~/pages/repo/types";
 
-const DAY_IN_SECONDS = 60 * 60 * 24;
+const DAY_IN_SECONDS = 24 * 60 * 60;
+const DAYS_IN_WEEK = 7;
 
 interface CommitsSectionContentProps extends CommonSectionProps {
 	activity: GHApiGetCommitActivityResponse | undefined;
+	branch: string;
 }
 
 export default function CommitsSectionContent({
 	owner,
 	repo,
+	branch,
 	activity: initialData,
 }: CommitsSectionContentProps) {
 	const query = useQuery({
-		queryKey: ["activity", owner, repo],
-		queryFn: () => ghApi.getCommitActivity(owner, repo),
+		queryKey: ["activity", owner, repo, branch],
+		queryFn: ({ signal }) => ghApi.getCommitActivity(owner, repo, branch, signal),
 		initialData,
 	});
 
@@ -62,6 +65,8 @@ const Heatmap = memo(({ activity }: { activity: GHApiGetCommitActivityResponse }
 	const headerOffset = 17;
 	const weekDaysOffset = 35;
 	const monthLabelOffset = 10;
+	const width = weekDaysOffset + activity.length * cellSize;
+	const height = headerOffset + DAYS_IN_WEEK * cellSize;
 
 	const maxLevel = 4;
 
@@ -78,7 +83,12 @@ const Heatmap = memo(({ activity }: { activity: GHApiGetCommitActivityResponse }
 
 	return (
 		<div class="grid h-36 place-items-center overflow-x-auto rounded-md border border-border p-4">
-			<svg class="min-w-[700px]" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 863 128">
+			<svg
+				class="min-w-[700px]"
+				xmlns="http://www.w3.org/2000/svg"
+				viewBox={`0 0 ${width} ${height}`}
+				style={{ minWidth: `${width}px` }}
+			>
 				<g fill="currentColor" transform={`translate(${weekDaysOffset}, ${headerOffset})`}>
 					{activity.map((week, weekIndex) => (
 						<g transform={`translate(${weekIndex * cellSize}, 0)`} key={week.week}>

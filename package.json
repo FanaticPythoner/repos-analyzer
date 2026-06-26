@@ -23,6 +23,7 @@
 		"prepare": "cross-env FORCE_COLOR=1 run-s -l prepare:*",
 		"prepare:tools": "pt prepare",
 		"prepare:nitro": "nitropack prepare",
+		"test:commit-activity": "tsx scripts/test-commit-activity.ts",
 		"test:search-input": "tsx scripts/test-search-input-behavior.ts",
 		"verify:pages-artifact": "tsx scripts/verify-pages-artifact.ts"
 	},

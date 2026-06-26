@@ -4,7 +4,16 @@ import { cachedApiFunction } from "../cache";
 import { dayjs } from "../dayjs";
 import { baseFetcher } from "../fetcher";
 import { toast } from "../toasts/toasts";
-import { isClient, sleep } from "../utils";
+import { isClient } from "../utils";
+import {
+	buildCommitActivity,
+	COMMIT_ACTIVITY_PAGE_CONCURRENCY,
+	COMMIT_ACTIVITY_PAGE_SIZE,
+	GHApiCommitActivityResponse,
+	GHApiCommitResponse,
+	getCommitActivitySince,
+	parseLastPageFromLink,
+} from "./commit-activity";
 import { getRawGitHubFileUrl } from "./utils";
 
 const createClientFetcher = () => {
@@ -49,8 +58,7 @@ export type GHApiGetRepoResponse = Endpoints["GET /repos/{owner}/{repo}"]["respo
 export type GHApiGetRepoHealthResponse =
 	Endpoints["GET /repos/{owner}/{repo}/community/profile"]["response"]["data"];
 
-export type GHApiGetCommitActivityResponse =
-	Endpoints["GET /repos/{owner}/{repo}/stats/commit_activity"]["response"]["data"];
+export type GHApiGetCommitActivityResponse = GHApiCommitActivityResponse;
 
 export type GHApiSearchReposResponse = Endpoints["GET /search/repositories"]["response"]["data"];
 
@@ -82,6 +90,74 @@ const getContents = async (owner: string, repo: string, path: string) => {
 
 		throw error;
 	}
+};
+
+const assertCommitPage = (value: unknown): GHApiCommitResponse[] => {
+	if (!Array.isArray(value)) {
+		throw new Error("GitHub commits response must be an array.");
+	}
+
+	return value;
+};
+
+const fetchCommitPage = async (
+	owner: string,
+	repo: string,
+	branch: string,
+	since: string,
+	page: number,
+	signal?: AbortSignal,
+) => {
+	const response = await fetcher.raw<GHApiCommitResponse[]>(
+		`https://api.github.com/repos/${owner}/${repo}/commits`,
+		{
+			params: {
+				sha: branch,
+				since,
+				per_page: COMMIT_ACTIVITY_PAGE_SIZE,
+				page,
+			},
+			signal,
+		},
+	);
+
+	return {
+		commits: assertCommitPage(response._data),
+		lastPage: parseLastPageFromLink(response.headers.get("link")),
+	};
+};
+
+const fetchCommitActivityCommits = async (
+	owner: string,
+	repo: string,
+	branch: string,
+	since: string,
+	signal?: AbortSignal,
+): Promise<GHApiCommitResponse[]> => {
+	const firstPage = await fetchCommitPage(owner, repo, branch, since, 1, signal);
+	const commits = [...firstPage.commits];
+
+	for (
+		let pageStart = 2;
+		pageStart <= firstPage.lastPage;
+		pageStart += COMMIT_ACTIVITY_PAGE_CONCURRENCY
+	) {
+		const pageEnd = Math.min(
+			pageStart + COMMIT_ACTIVITY_PAGE_CONCURRENCY - 1,
+			firstPage.lastPage,
+		);
+		const pages = await Promise.all(
+			Array.from({ length: pageEnd - pageStart + 1 }, (_, index) =>
+				fetchCommitPage(owner, repo, branch, since, pageStart + index, signal),
+			),
+		);
+
+		for (const page of pages) {
+			commits.push(...page.commits);
+		}
+	}
+
+	return commits;
 };
 
 const isIssueTemplateFile = (item: GHApiContentItem) => {
@@ -170,30 +246,11 @@ export const ghApi = {
 
 	getCommitActivity: cachedApiFunction(
 		"ghApi.getCommitActivity",
-		async (owner: string, repo: string) => {
-			const clean = (result: GHApiGetCommitActivityResponse | undefined) => {
-				return result && Array.isArray(result) ? result : null;
-			};
+		async (owner: string, repo: string, branch: string, signal?: AbortSignal) => {
+			const since = getCommitActivitySince();
+			const commits = await fetchCommitActivityCommits(owner, repo, branch, since, signal);
 
-			const delayStep = 5_000;
-			let delay = 10_000;
-
-			const request = async () => {
-				const result = await baseFetcher.raw<GHApiGetCommitActivityResponse>(
-					`https://api.github.com/repos/${owner}/${repo}/stats/commit_activity`,
-				);
-
-				if (isClient && result.status === 202) {
-					await sleep(delay);
-					delay += delayStep;
-
-					return request();
-				}
-
-				return clean(result._data);
-			};
-
-			return request();
+			return buildCommitActivity(commits);
 		},
 	),
 
