@@ -6,7 +6,7 @@ import { Link } from "~/components/Link";
 import { RepoStats } from "~/components/RepoStats";
 import { useSSRContext } from "~/lib/context";
 import { formatBytes } from "~/lib/format";
-import { joinBasePath } from "~/lib/public-path";
+import { getDocumentBasePath, joinBasePath } from "~/lib/public-path";
 import { removeProtocol } from "~/lib/utils";
 import { CommonSectionProps } from "../types";
 
@@ -20,7 +20,7 @@ export const InfoSectionContent = ({
 	owner,
 	repo,
 	data,
-	basePath = "/",
+	basePath = getDocumentBasePath(),
 }: InfoSectionContentProps) => {
 	if (!data) {
 		return <ErrorPlaceholder>Failed to load repo info</ErrorPlaceholder>;

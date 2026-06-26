@@ -253,6 +253,7 @@ test:
     set -euo pipefail
     just ci
     just test-commit-activity
+    just test-repo-refs
     just test-search-input
     just test-release-scripts
 
@@ -263,6 +264,14 @@ test-commit-activity:
     set -euo pipefail
     {{ node_bootstrap }}
     pnpm test:commit-activity
+
+# Examples:
+# just test-repo-refs
+test-repo-refs:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    {{ node_bootstrap }}
+    pnpm test:repo-refs
 
 # Examples:
 # just test-search-input

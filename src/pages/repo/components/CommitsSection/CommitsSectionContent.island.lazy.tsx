@@ -61,7 +61,8 @@ export default function CommitsSectionContent({
 const Heatmap = memo(({ activity }: { activity: GHApiGetCommitActivityResponse }) => {
 	const weekDays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
-	const cellSize = 16;
+	const cellSize = 14;
+	const rectSize = 10;
 	const headerOffset = 17;
 	const weekDaysOffset = 35;
 	const monthLabelOffset = 10;
@@ -82,12 +83,16 @@ const Heatmap = memo(({ activity }: { activity: GHApiGetCommitActivityResponse }
 	};
 
 	return (
-		<div class="grid h-36 place-items-center overflow-x-auto rounded-md border border-border p-4">
+		<div
+			aria-label="Commit activity heatmap viewport"
+			class="grid h-36 place-items-center overflow-hidden rounded-md border border-border p-4"
+		>
 			<svg
-				class="min-w-[700px]"
+				aria-label="Commit activity heatmap"
+				class="h-full w-full max-w-[48rem]"
 				xmlns="http://www.w3.org/2000/svg"
+				role="img"
 				viewBox={`0 0 ${width} ${height}`}
-				style={{ minWidth: `${width}px` }}
 			>
 				<g fill="currentColor" transform={`translate(${weekDaysOffset}, ${headerOffset})`}>
 					{activity.map((week, weekIndex) => (
@@ -99,8 +104,8 @@ const Heatmap = memo(({ activity }: { activity: GHApiGetCommitActivityResponse }
 										"outline -outline-offset-1 outline-[#6b728010]",
 										levelToClass[valueToLevel(value)],
 									)}
-									width="11"
-									height="11"
+									width={rectSize}
+									height={rectSize}
 									rx="2"
 									ry="2"
 									y={dayIndex * cellSize}
@@ -129,7 +134,7 @@ const Heatmap = memo(({ activity }: { activity: GHApiGetCommitActivityResponse }
 							return null;
 						}
 
-						// do not show the label if it's the last column
+						// Last-column month text clips against the right edge.
 						if (index + 1 >= activity.length) {
 							return null;
 						}

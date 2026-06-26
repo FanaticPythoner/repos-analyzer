@@ -14,6 +14,7 @@ import {
 	getCommitActivitySince,
 	parseLastPageFromLink,
 } from "./commit-activity";
+import { buildGitHubRepoRefGroups, GitHubRepoRefGroups } from "./refs";
 import { getRawGitHubFileUrl } from "./utils";
 
 const createClientFetcher = () => {
@@ -63,6 +64,14 @@ export type GHApiGetCommitActivityResponse = GHApiCommitActivityResponse;
 export type GHApiSearchReposResponse = Endpoints["GET /search/repositories"]["response"]["data"];
 
 export type GHApiGetReposResponse = Endpoints["GET /users/{username}/repos"]["response"]["data"];
+
+export type GHApiGetBranchesResponse =
+	Endpoints["GET /repos/{owner}/{repo}/branches"]["response"]["data"];
+
+export type GHApiGetTagsResponse = Endpoints["GET /repos/{owner}/{repo}/tags"]["response"]["data"];
+
+export type GHApiGetReleasesResponse =
+	Endpoints["GET /repos/{owner}/{repo}/releases"]["response"]["data"];
 
 type GHApiRepoHealthFile = NonNullable<
 	NonNullable<GHApiGetRepoHealthResponse["files"]>["issue_template"]
@@ -160,6 +169,52 @@ const fetchCommitActivityCommits = async (
 	return commits;
 };
 
+const fetchGitHubArrayPage = async <TItem>(url: string, page: number, signal?: AbortSignal) => {
+	const response = await fetcher.raw<TItem[]>(url, {
+		params: {
+			per_page: COMMIT_ACTIVITY_PAGE_SIZE,
+			page,
+		},
+		signal,
+	});
+
+	if (!Array.isArray(response._data)) {
+		throw new Error("GitHub paginated response must be an array.");
+	}
+
+	return {
+		items: response._data,
+		lastPage: parseLastPageFromLink(response.headers.get("link")),
+	};
+};
+
+const fetchGitHubArray = async <TItem>(url: string, signal?: AbortSignal): Promise<TItem[]> => {
+	const firstPage = await fetchGitHubArrayPage<TItem>(url, 1, signal);
+	const items = [...firstPage.items];
+
+	for (
+		let pageStart = 2;
+		pageStart <= firstPage.lastPage;
+		pageStart += COMMIT_ACTIVITY_PAGE_CONCURRENCY
+	) {
+		const pageEnd = Math.min(
+			pageStart + COMMIT_ACTIVITY_PAGE_CONCURRENCY - 1,
+			firstPage.lastPage,
+		);
+		const pages = await Promise.all(
+			Array.from({ length: pageEnd - pageStart + 1 }, (_, index) =>
+				fetchGitHubArrayPage<TItem>(url, pageStart + index, signal),
+			),
+		);
+
+		for (const page of pages) {
+			items.push(...page.items);
+		}
+	}
+
+	return items;
+};
+
 const isIssueTemplateFile = (item: GHApiContentItem) => {
 	return (
 		item.type === "file" &&
@@ -178,6 +233,33 @@ export const ghApi = {
 			`https://api.github.com/repos/${owner}/${repo}/community/profile`,
 		);
 	}),
+
+	getRepoRefs: cachedApiFunction(
+		"ghApi.getRepoRefs",
+		async (
+			owner: string,
+			repo: string,
+			defaultBranch?: string | null,
+			signal?: AbortSignal,
+		): Promise<GitHubRepoRefGroups> => {
+			const [branches, tags, releases] = await Promise.all([
+				fetchGitHubArray<GHApiGetBranchesResponse[number]>(
+					`https://api.github.com/repos/${owner}/${repo}/branches`,
+					signal,
+				),
+				fetchGitHubArray<GHApiGetTagsResponse[number]>(
+					`https://api.github.com/repos/${owner}/${repo}/tags`,
+					signal,
+				),
+				fetchGitHubArray<GHApiGetReleasesResponse[number]>(
+					`https://api.github.com/repos/${owner}/${repo}/releases`,
+					signal,
+				),
+			]);
+
+			return buildGitHubRepoRefGroups({ branches, defaultBranch, tags, releases });
+		},
+	),
 
 	getIssueTemplate: cachedApiFunction(
 		"ghApi.getIssueTemplate",

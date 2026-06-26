@@ -35,6 +35,11 @@ const blockedPatterns: TextPattern[] = [
 			/This site is open source|Improve this page|GitHub Pages deployment|<h1[^>]*>repos-analyzer/i,
 	},
 	{ label: "Vercel app URL", pattern: /ghloc\.vercel\.app|https?:\/\/[^"'()\s]*vercel\.app/i },
+	{
+		label: "upstream extension URL",
+		pattern:
+			/addons\.mozilla\.org\/firefox\/addon\/github-lines-of-code|gist\.github\.com\/pajecawav\/70ffe72bf4aa0968aa9f97318976138f/i,
+	},
 	{ label: "root asset URL", pattern: /(?:href|src)=["']\/assets\//i },
 ];
 

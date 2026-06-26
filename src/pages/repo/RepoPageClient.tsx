@@ -9,6 +9,7 @@ import { HealthSectionClient } from "./components/HealthSection";
 import { InfoSectionContent } from "./components/InfoSection";
 import LocsSection from "./components/LocsSection/LocsSection.island.lazy";
 import { PackageSectionClient } from "./components/PackageSection/PackageSectionClient";
+import RepoRefSelector from "./components/RepoRefSelector.island.lazy";
 import { RepoPageLayout } from "./RepoPageLayout";
 
 interface RepoPageClientProps {
@@ -55,7 +56,17 @@ export const RepoPageClient = ({ owner, repo }: RepoPageClientProps) => {
 
 	return (
 		<RepoPageLayout
-			info={<InfoSectionContent {...props} />}
+			info={
+				<>
+					<InfoSectionContent {...props} />
+					<RepoRefSelector
+						branch={branch}
+						defaultBranch={defaultBranch}
+						owner={owner}
+						repo={repo}
+					/>
+				</>
+			}
 			health={<HealthSectionClient {...props} />}
 			pkg={<PackageSectionClient {...props} />}
 			commits={<CommitsSectionContent {...props} activity={undefined} />}

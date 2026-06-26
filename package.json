@@ -24,6 +24,7 @@
 		"prepare:tools": "pt prepare",
 		"prepare:nitro": "nitropack prepare",
 		"test:commit-activity": "tsx scripts/test-commit-activity.ts",
+		"test:repo-refs": "tsx scripts/test-repo-refs.ts",
 		"test:search-input": "tsx scripts/test-search-input-behavior.ts",
 		"verify:pages-artifact": "tsx scripts/verify-pages-artifact.ts"
 	},

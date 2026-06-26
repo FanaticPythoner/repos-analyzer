@@ -3,14 +3,14 @@ import { RepoStats } from "~/components/RepoStats";
 import { useSSRContext } from "~/lib/context";
 import { dayjs } from "~/lib/dayjs";
 import { GHApiGetReposResponse } from "~/lib/github/api";
-import { joinBasePath } from "~/lib/public-path";
+import { getDocumentBasePath, joinBasePath } from "~/lib/public-path";
 
 interface RepoCardProps {
 	repo: GHApiGetReposResponse[number];
 	basePath?: string;
 }
 
-const RepoCardContent = ({ repo, basePath = "/" }: RepoCardProps) => {
+const RepoCardContent = ({ repo, basePath = getDocumentBasePath() }: RepoCardProps) => {
 	let href = `/${repo.owner.login}/${repo.name}`;
 
 	if (repo.default_branch) {

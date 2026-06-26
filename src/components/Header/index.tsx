@@ -2,7 +2,7 @@ import { useSSRContext } from "~/lib/context";
 import { Island } from "~/lib/island";
 import { joinBasePath } from "~/lib/public-path";
 import { CodeIcon } from "../icons/CodeIcon";
-import { FirefoxIcon } from "../icons/FirefoxIcon";
+import { ExternalLinkIcon } from "../icons/ExternalLinkIcon";
 import { GitHubIcon } from "../icons/GitHubIcon";
 import { SearchIcon } from "../icons/SearchIcon";
 import { HeaderItem } from "./HeaderItem";
@@ -26,20 +26,20 @@ export const Header = () => {
 					</HeaderItem>
 				</a>
 				<a
-					href="https://addons.mozilla.org/firefox/addon/github-lines-of-code"
+					href={`${repositoryUrl}/releases/latest`}
 					target="_blank"
 					rel="noopener"
-					title="Firefox addon"
+					title="Latest release"
 				>
 					<HeaderItem>
-						<FirefoxIcon />
+						<ExternalLinkIcon />
 					</HeaderItem>
 				</a>
 				<a
-					href="https://gist.github.com/pajecawav/70ffe72bf4aa0968aa9f97318976138f"
+					href={`${repositoryUrl}/actions/workflows/deploy.yml`}
 					target="_blank"
 					rel="noopener"
-					title="Userscript link"
+					title="Deploy workflow"
 				>
 					<HeaderItem>
 						<CodeIcon />
