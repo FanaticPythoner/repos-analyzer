@@ -46,8 +46,6 @@ jobs:
                   RELEASE_TARGET_SHA: ${{ github.sha }}
               run: bash scripts/release/create-or-update-moving-github-release.sh
 
-            - uses: actions/configure-pages@v6
-
             - uses: actions/upload-pages-artifact@v5
               with:
                   path: .output/public

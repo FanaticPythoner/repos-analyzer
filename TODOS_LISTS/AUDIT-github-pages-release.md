@@ -13,6 +13,7 @@
 | `src/pages/app/AppShell.island.lazy.tsx` | Static Pages client route shell for dynamic owner and repo URLs.                |
 | `scripts/build-pages-spa-routes.ts`      | Copies the static app shell to `404.html` for GitHub Pages SPA routing.         |
 | `scripts/verify-pages-artifact.ts`       | Fails release builds that output README/Jekyll, Vercel URL, or root asset HTML. |
+| `.github/workflows/deploy.yml`           | Uploads the verified static artifact directly to Pages deployment APIs.         |
 | `package.json`                           | Package name and version source for release artifacts.                          |
 | `.gitignore`                             | Excludes generated release archives and build outputs.                          |
 
@@ -50,12 +51,14 @@
 | `scripts/build-pages-spa-routes.ts`          | Added GitHub Pages SPA route artifact generation.                   |
 | `scripts/verify-pages-artifact.ts`           | Added Pages artifact invariants for app shell, base path, and URLs. |
 | `scripts/release/build-release-artifacts.sh` | Added Pages artifact verification before Pages archive creation.    |
+| `.github/workflows/deploy.yml`               | Removed optional configure-pages step that fails on legacy source.  |
 
 ## Scope Completion Map
 
 | Requirement                     | Files                                                                                                                                                              | Verification                                                                                      |
 | ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------- |
 | GitHub Pages deploy from Action | `.github/workflows/deploy.yml`, `src/routes/404.html.get.tsx`                                                                                                      | `just lint-actions`, `NITRO_PRESET=github_pages pnpm build` via artifact build                    |
+| Configure-pages failure removal | `.github/workflows/deploy.yml`                                                                                                                                     | `gh run view 28251146668 --repo FanaticPythoner/repos-analyzer --log`                             |
 | GitHub Pages dynamic app parity | `src/pages/app/AppShell.island.lazy.tsx`, `src/pages/repo/RepoPageClient.tsx`, `src/pages/repo/owner/OwnerPageClient.tsx`, `scripts/build-pages-spa-routes.ts`     | Local Pages server, Playwright root and deep-link screenshots                                     |
 | README/Jekyll regression block  | `scripts/verify-pages-artifact.ts`, `scripts/release/build-release-artifacts.sh`                                                                                   | `NITRO_PRESET=github_pages pnpm run verify:pages-artifact`, live HTML invariant check             |
 | Better Todo Tree style Justfile | `justfile`                                                                                                                                                         | `just --fmt --check`, `just --list --unsorted`                                                    |
