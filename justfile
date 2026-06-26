@@ -252,7 +252,16 @@ test:
     #!/usr/bin/env bash
     set -euo pipefail
     just ci
+    just test-search-input
     just test-release-scripts
+
+# Examples:
+# just test-search-input
+test-search-input:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    {{ node_bootstrap }}
+    pnpm test:search-input
 
 # Examples:
 # just ci

@@ -197,11 +197,15 @@ export const ghApi = {
 		},
 	),
 
-	searchRepos: cachedApiFunction("ghApi.searchRepos", async (query: string, perPage = 10) => {
-		return fetcher<GHApiSearchReposResponse>("https://api.github.com/search/repositories", {
-			params: { q: query, per_page: perPage },
-		});
-	}),
+	searchRepos: cachedApiFunction(
+		"ghApi.searchRepos",
+		async (query: string, perPage = 10, signal?: AbortSignal) => {
+			return fetcher<GHApiSearchReposResponse>("https://api.github.com/search/repositories", {
+				params: { q: query, per_page: perPage },
+				signal,
+			});
+		},
+	),
 
 	getRepos: cachedApiFunction("ghApi.getRepos", async (owner: string, limit = 3 * 20) => {
 		return fetcher<GHApiGetReposResponse>(`https://api.github.com/users/${owner}/repos`, {

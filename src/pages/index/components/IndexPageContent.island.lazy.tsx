@@ -8,24 +8,76 @@ import { toDocumentPath } from "~/lib/public-path";
 import { useQuery } from "~/lib/query/useQuery";
 import { useRouter } from "~/lib/router/useRouter";
 import { cn } from "~/lib/utils";
+import {
+	getSearchNavigationTarget,
+	getSearchQueryCandidate,
+	normalizePastedSearchInput,
+	SEARCH_DEBOUNCE_MS,
+	SEARCH_RESULT_LIMIT,
+} from "./search-input-behavior";
 import { SearchResults } from "./SearchResults";
-
-const githubUrlRegex = /(https?:\/\/)?github.com\/(?<owner>[^/]+)\/(?<repo>[^/#?]+)(\/[^$]+)?/;
 
 export default function IndexPageContent() {
 	const router = useRouter();
 
 	const inputRef = useRef<HTMLInputElement>(null);
 	const queryValue = router.search.get("query") ?? "";
-	const [debouncedQuery, setDebouncedQuery] = useDebouncedValue(queryValue, 750);
+	const [inputValue, setInputValue] = useState(queryValue);
+	const inputCandidate = getSearchQueryCandidate(inputValue);
+	const [committedQuery, setCommittedQuery] = useDebouncedValue(
+		inputCandidate,
+		SEARCH_DEBOUNCE_MS,
+	);
+	const canUseQueryResults = committedQuery.length > 0 && inputCandidate === committedQuery;
 
 	const [activeIndex, setActiveIndex] = useState(0);
 
 	const query = useQuery({
-		queryKey: ["searchRepos", debouncedQuery],
-		queryFn: () => ghApi.searchRepos(debouncedQuery),
-		enabled: !!debouncedQuery,
+		queryKey: ["searchRepos", committedQuery],
+		queryFn: ({ signal }) => ghApi.searchRepos(committedQuery, SEARCH_RESULT_LIMIT, signal),
+		enabled: committedQuery.length > 0,
 	});
+	const queryItems = canUseQueryResults ? query.data?.items : undefined;
+	const maxActiveIndex = Math.max((queryItems?.length ?? 1) - 1, 0);
+
+	const syncCommittedQueryParam = (value: string) => {
+		if (queryValue === value) {
+			return;
+		}
+
+		router.setSearch(
+			prev => {
+				const next = new URLSearchParams(prev);
+
+				if (value) {
+					next.set("query", value);
+				} else {
+					next.delete("query");
+				}
+
+				return next;
+			},
+			{ replace: true },
+		);
+	};
+
+	const commitSearch = (value: string) => {
+		const nextQuery = getSearchQueryCandidate(value);
+		setCommittedQuery(nextQuery);
+		syncCommittedQueryParam(nextQuery);
+	};
+
+	const navigateToSearchTarget = (value: string) => {
+		const target = getSearchNavigationTarget(value);
+
+		if (!target) {
+			return false;
+		}
+
+		location.href = toDocumentPath(target.path);
+
+		return true;
+	};
 
 	useEffect(() => {
 		inputRef.current?.focus();
@@ -44,43 +96,44 @@ export default function IndexPageContent() {
 		};
 	}, []);
 
+	useEffect(() => {
+		setInputValue(queryValue);
+		setCommittedQuery(getSearchQueryCandidate(queryValue));
+	}, [queryValue]);
+
+	useEffect(() => {
+		syncCommittedQueryParam(committedQuery);
+	}, [committedQuery]);
+
 	useLayoutEffect(() => {
 		setActiveIndex(0);
-	}, [query?.data]);
+	}, [query?.data, committedQuery, inputCandidate]);
 
 	const onChange = (e: Event) => {
 		if (e.target instanceof HTMLInputElement) {
-			let newQuery = e.target.value;
+			const inputEvent = e as InputEvent;
+			const newQuery =
+				"inputType" in inputEvent && inputEvent.inputType === "insertFromPaste"
+					? normalizePastedSearchInput(e.target.value)
+					: e.target.value;
 
-			if ("inputType" in e && (e as InputEvent).inputType === "insertFromPaste") {
-				const match = newQuery.match(githubUrlRegex);
-				if (match?.groups) {
-					const { owner, repo } = match.groups;
-					newQuery = `${owner}/${repo}`;
-				}
-
-				setDebouncedQuery(newQuery);
-			}
-
-			router.setSearch(prev => {
-				prev.set("query", newQuery);
-
-				return prev;
-			});
+			setInputValue(newQuery);
 		}
 	};
 
 	const onKeyDown = (e: KeyboardEvent) => {
 		if (e.key === "Enter") {
-			const item = query.data?.items[activeIndex];
+			const item = queryItems?.[activeIndex];
 
 			if (item) {
 				location.href = toDocumentPath(
 					`/${item.full_name}?branch=${encodeURIComponent(item.default_branch)}`,
 				);
+			} else if (!navigateToSearchTarget(inputValue)) {
+				commitSearch(inputValue);
 			}
 		} else if (e.key === "ArrowDown") {
-			setActiveIndex(Math.min(activeIndex + 1, (query.data?.items.length ?? 1) - 1));
+			setActiveIndex(Math.min(activeIndex + 1, maxActiveIndex));
 			e.preventDefault();
 		} else if (e.key === "ArrowUp") {
 			setActiveIndex(Math.max(activeIndex - 1, 0));
@@ -98,7 +151,7 @@ export default function IndexPageContent() {
 				<Input
 					onKeyDown={onKeyDown}
 					ref={inputRef}
-					value={queryValue}
+					value={inputValue}
 					onChange={onChange}
 					inputClass="py-3 text-center text-2xl font-light"
 					type="text"
@@ -109,18 +162,25 @@ export default function IndexPageContent() {
 					autocapitalize="off"
 					spellcheck={false}
 					after={
-						<div
+						<button
+							type="button"
+							aria-label="Search repositories"
+							onClick={() => {
+								if (!navigateToSearchTarget(inputValue)) {
+									commitSearch(inputValue);
+								}
+							}}
 							class={cn(
-								"h-8 w-8 transition-colors duration-100",
+								"flex h-8 w-8 cursor-pointer items-center justify-center border-0 bg-transparent p-0 transition-colors duration-100",
 								"text-neutral-400 group-focus-within:text-black dark:text-neutral-500 dark:group-focus-within:text-neutral-400",
 							)}
 						>
-							{query.status === "fetching" ? (
+							{canUseQueryResults && query.status === "fetching" ? (
 								<SpinnerIcon class="animate-spin" />
 							) : (
 								<SearchIcon />
 							)}
-						</div>
+						</button>
 					}
 				/>
 			</div>
@@ -129,7 +189,7 @@ export default function IndexPageContent() {
 				<SearchResults
 					activeIndex={activeIndex}
 					onChangeActiveIndex={setActiveIndex}
-					items={query.data?.items}
+					items={queryItems}
 				/>
 			</div>
 		</div>
