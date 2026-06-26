@@ -35,6 +35,7 @@ archive_output "${package_name}-${package_version}-nitro-server.tar.gz" public s
 
 NITRO_PRESET=github_pages pnpm build
 test -d .output/public
+NITRO_PRESET=github_pages pnpm run verify:pages-artifact
 archive_output "${package_name}-${package_version}-github-pages.tar.gz" public
 
 (

@@ -4,9 +4,9 @@
 	"private": true,
 	"type": "module",
 	"scripts": {
-		"build": "cross-env FORCE_COLOR=1 run-s -l prepare:nitro build:languages build:sitemap build:vite build:nitro build:pages-fallback",
+		"build": "cross-env FORCE_COLOR=1 run-s -l prepare:nitro build:languages build:sitemap build:vite build:nitro build:pages-spa-routes",
 		"build:languages": "tsx scripts/build-languages.ts",
-		"build:pages-fallback": "tsx scripts/build-pages-fallback.ts",
+		"build:pages-spa-routes": "tsx scripts/build-pages-spa-routes.ts",
 		"build:sitemap": "tsx scripts/build-sitemap.ts",
 		"build:vite": "vite build",
 		"build:nitro": "nitro build",
@@ -22,7 +22,8 @@
 		"clean": "rimraf dist dist-vite .nitro .output node_modules/.cache",
 		"prepare": "cross-env FORCE_COLOR=1 run-s -l prepare:*",
 		"prepare:tools": "pt prepare",
-		"prepare:nitro": "nitropack prepare"
+		"prepare:nitro": "nitropack prepare",
+		"verify:pages-artifact": "tsx scripts/verify-pages-artifact.ts"
 	},
 	"dependencies": {
 		"@arborium/arborium": "^2.18.0",

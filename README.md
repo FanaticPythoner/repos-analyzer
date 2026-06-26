@@ -2,7 +2,7 @@
 
 ![build status](https://github.com/FanaticPythoner/repos-analyzer/actions/workflows/ci.yml/badge.svg)
 
-GitHub Pages deployment of the `ghloc` repository line-count app.
+Repository line-count app for GitHub repositories.
 
 ## URLs
 
